@@ -1,0 +1,15 @@
+{
+    "name": "maison-hub/maplee",
+    "description": "Simple file based php router",
+    "autoload": {
+        "psr-4": {
+            "Maplee\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Antoine Rbl"
+        }
+    ],
+    "require": {}
+}
