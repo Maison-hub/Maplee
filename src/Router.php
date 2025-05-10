@@ -2,10 +2,14 @@
 
 namespace Maplee;
 
+use Maplee\MapleeRequest;
+
 class Router
 {
     protected string $routesPath;
     protected array $params = [];
+    public static array $currentParams = [];
+
 
     public function __construct(?string $configPath = null, array $overrides = [])
     {
@@ -41,10 +45,21 @@ class Router
         $resolvedFile = $this->resolveFile($segments);
 
         if ($resolvedFile && file_exists($resolvedFile)) {
+            if (isset($_SERVER['QUERY_STRING'])) {
+                parse_str($_SERVER['QUERY_STRING'], $queryParams);
+                $this->params = array_merge($this->params, $queryParams);
+            }
+            $request = new MapleeRequest(
+                $uri,
+                $_SERVER['REQUEST_METHOD'],
+                $this->params,
+                $_POST // Simulate body parameters
+            );
+
             $result = include $resolvedFile;
 
             if (is_callable($result)) {
-                $response = $result($this->params);
+                $response = $result($request); // Pass the MapleeRequest object
                 echo $response;
             }
         } else {
@@ -91,10 +106,8 @@ class Router
                     return $dynamicFile['path'];
                 } elseif ($dynamicFileDefault) {
                     $this->params[$dynamicFileDefault['param']] = $segment;
-                    var_dump($this->params);
                     return $dynamicFileDefault['path'];
                 }
-    
                 return null;
             }
         }
