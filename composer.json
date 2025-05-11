@@ -1,6 +1,8 @@
 {
     "name": "maison-hub/maplee",
     "description": "Simple file based php router",
+    "keywords": ["router", "php", "file-based"],
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Maplee\\": "src/"
