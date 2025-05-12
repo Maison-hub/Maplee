@@ -7,10 +7,18 @@ use Maplee\MapleeRequest;
 class Router
 {
     protected string $routesPath;
+
+    /**
+     * @var array<int|string, mixed>
+     */
     protected array $params = [];
-    public static array $currentParams = [];
 
-
+    /**
+     * Router constructor.
+     *
+     * @param string|null $configPath Path to the configuration file.
+     * @param array<string, mixed> $overrides Array of overrides for the configuration.
+     */
     public function __construct(?string $configPath = null, array $overrides = [])
     {
         $fileConfig = Config::load($configPath);
@@ -38,8 +46,8 @@ class Router
             ], JSON_PRETTY_PRINT);
             return;
         }
-
-        $path = trim($uri, '/');
+        $uri = trim((string) $uri, '/');
+        $path = $uri;
         $segments = explode('/', $path);
 
         $resolvedFile = $this->resolveFile($segments);
@@ -71,7 +79,7 @@ class Router
     /**
      * Resolve the file path based on the segments
      *
-     * @param array $segments
+     * @param array<string> $segments
      * @return string|null
      */
     protected function resolveFile(array $segments): ?string
@@ -123,6 +131,11 @@ class Router
         return null;
     }
 
+    /**
+     * List all routes in the routes directory
+     *
+     * @return array<string>
+     */
     public function listRoutes(): array
     {
         $routes = [];
@@ -130,6 +143,14 @@ class Router
         return $routes;
     }
 
+    /**
+     * Scan the routes directory recursively
+     *
+     * @param string $basePath
+     * @param string $prefix
+     * @param array<string> $routes
+     * @return void
+     */
     protected function scanRoutes(string $basePath, string $prefix, array &$routes): void
     {
         foreach (scandir($basePath) as $item) {
@@ -144,8 +165,18 @@ class Router
         }
     }
 
-    protected function matchDynamicFolder(string $dir, string $segment): ?array
+    /**
+     * Match dynamic folders
+     *
+     * @param string|false $dir
+     * @param string $segment
+     * @return array<string, string>|null
+     */
+    protected function matchDynamicFolder(string|false $dir, string $segment): ?array
     {
+        if ($dir === false) {
+            return null;
+        }
         foreach (scandir($dir) as $entry) {
             if (preg_match('/^\[(\w+)\]$/', $entry, $matches) && is_dir($dir . DIRECTORY_SEPARATOR . $entry)) {
                 return [
@@ -157,8 +188,19 @@ class Router
         return null;
     }
 
-    protected function matchDynamicFile(string $dir, string $segment, string $method): ?array
+    /**
+     * Match dynamic files
+     *
+     * @param string|false $dir
+     * @param string $segment
+     * @param string $method
+     * @return array<string, string>|null
+     */
+    protected function matchDynamicFile(string|false $dir, string $segment, string $method): ?array
     {
+        if ($dir === false) {
+            return null;
+        }
         foreach (scandir($dir) as $entry) {
             if (preg_match('/^\[(\w+)\]\.' . $method . '\.php$/', $entry, $matches)) {
                 return [
@@ -166,8 +208,6 @@ class Router
                     'path' => $dir . '/' . $entry
                 ];
             }
-    
-            // Si méthode GET par défaut (aucun suffixe)
             if ($method === 'get' && preg_match('/^\[(\w+)\]\.php$/', $entry, $matches)) {
                 return [
                     'param' => $matches[1],
