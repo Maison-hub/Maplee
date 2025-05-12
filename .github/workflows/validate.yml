@@ -21,8 +21,14 @@ jobs:
           php-version: '8.2'
           tools: composer
 
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
 
       - name: Lint PHP files
         run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse
