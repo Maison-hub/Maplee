@@ -30,5 +30,8 @@ jobs:
       - name: Lint PHP files
         run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      - name: Run PHP CodeSniffer
+        run: vendor/bin/phpcs
+
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse
