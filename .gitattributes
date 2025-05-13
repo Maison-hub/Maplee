@@ -1,0 +1,29 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Force the following filetypes to have unix eols, so Windows does not break them
+*.php text eol=lf
+*.phpt text eol=lf
+*.inc text eol=lf
+*.xml text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.rst text eol=lf
+*.neon text eol=lf
+composer.lock text eol=lf
+
+# Files that will be ignored when creating archives
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpunit.xml.dist export-ignore
+/tests export-ignore
+/phpcs.xml export-ignore
+/phpstan.neon export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/README.md export-ignore
+/CHANGELOG.md export-ignore
+/CONTRIBUTING.md export-ignore
+/LICENSE export-ignore

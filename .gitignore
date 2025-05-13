@@ -1,0 +1,35 @@
+# Dependencies
+/vendor/
+composer.phar
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+.phpstorm.meta.php
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Cache and logs
+*.log
+*.cache
+.phpunit.result.cache
+
+# Build files
+/build/
+/dist/
+/public/build/
+
+# Test coverage
+/coverage/
+.phpunit.cache/
+
+# Other
+.php-cs-fixer.cache
+.php_cs.cache
+.php-cs-fixer.php
