@@ -35,3 +35,6 @@ jobs:
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse
+
+      - name: Run PHPUnit tests
+        run: vendor/bin/phpunit --no-coverage
