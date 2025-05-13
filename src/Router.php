@@ -41,7 +41,7 @@ class Router
         if ($uri === '/__maplee/routes') {
             header('Content-Type: application/json');
             echo json_encode([
-                "routes-directory"=> $this->routesPath,
+                "routes-directory" => $this->routesPath,
                 "routes" => $this->listRoutes(),
             ], JSON_PRETTY_PRINT);
             return;
@@ -87,24 +87,23 @@ class Router
         $this->params = [];
         $current = realpath($this->routesPath);
         $method = strtolower($_SERVER['REQUEST_METHOD']);
-    
+
         foreach ($segments as $i => $segment) {
             $nextDir = $current . DIRECTORY_SEPARATOR . $segment;
             $dynamicDir = $this->matchDynamicFolder($current, $segment);
-    
+
             if (is_dir($nextDir)) {
                 $current = $nextDir;
             } elseif ($dynamicDir) {
                 $current = $dynamicDir['path'];
                 $this->params[$dynamicDir['param']] = $segment;
             } else {
-
                 $fileMethod = $current . DIRECTORY_SEPARATOR . $segment . '.' . $method . '.php';
                 $fileDefault = $current . DIRECTORY_SEPARATOR . $segment . '.php';
 
                 $dynamicFile = $this->matchDynamicFile($current, $segment, $method);
                 $dynamicFileDefault = $this->matchDynamicFile($current, $segment, 'get');
-    
+
                 if (file_exists($fileMethod)) {
                     return $fileMethod;
                 } elseif (file_exists($fileDefault)) {
@@ -154,7 +153,9 @@ class Router
     protected function scanRoutes(string $basePath, string $prefix, array &$routes): void
     {
         foreach (scandir($basePath) as $item) {
-            if ($item === '.' || $item === '..') continue;
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
 
             $fullPath = $basePath . DIRECTORY_SEPARATOR . $item;
             if (is_dir($fullPath)) {
