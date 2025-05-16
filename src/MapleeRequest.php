@@ -4,38 +4,65 @@ namespace Maplee;
 
 class MapleeRequest
 {
-    public string $uri;
-    public string $method;
-
-    /** @var array<int|string, mixed> */
-    public array $params;
-
-    /** @var array<string, mixed> */
-    public array $body;
-
     /**
-     * MapleeRequest constructor.
-     *
-     * @param string $uri The URI of the request.
-     * @param string $method The HTTP method of the request (e.g., GET, POST).
-     * @param array<int|string, mixed> $params The query parameters of the request.
-     * @param array<string, mixed> $body The body parameters of the request.
+     * @param string $uri
+     * @param string $method
+     * @param array<int|string, mixed> $params
+     * @param array<string, mixed> $body
      */
-    public function __construct(string $uri, string $method, array $params = [], array $body = [])
-    {
-        $this->uri = $uri;
-        $this->method = $method;
-        $this->params = $params;
-        $this->body = $body;
+    public function __construct(
+        private string $uri,
+        private string $method,
+        private array $params,
+        private array $body
+    ) {
     }
 
+    /**
+     * @return string
+     */
+    public function getUri(): string
+    {
+        return $this->uri;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+
+    /**
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getParam(string $key, mixed $default = null): mixed
     {
         return $this->params[$key] ?? $default;
     }
 
-    public function getBody(string $key, mixed $default = null): mixed
+    /**
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getBody(?string $key = null, mixed $default = null): mixed
     {
+        if ($key === null) {
+            return $this->body;
+        }
         return $this->body[$key] ?? $default;
     }
 }
