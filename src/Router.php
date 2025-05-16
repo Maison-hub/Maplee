@@ -86,6 +86,9 @@ class Router
     {
         $this->params = [];
         $current = realpath($this->routesPath);
+        if ($current === false) {
+            return null;
+        }
         $method = strtolower($_SERVER['REQUEST_METHOD']);
 
         foreach ($segments as $i => $segment) {
@@ -152,7 +155,12 @@ class Router
      */
     protected function scanRoutes(string $basePath, string $prefix, array &$routes): void
     {
-        foreach (scandir($basePath) as $item) {
+        $items = @scandir($basePath);
+        if ($items === false) {
+            return;
+        }
+
+        foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
@@ -178,7 +186,13 @@ class Router
         if ($dir === false) {
             return null;
         }
-        foreach (scandir($dir) as $entry) {
+
+        $items = @scandir($dir);
+        if ($items === false) {
+            return null;
+        }
+
+        foreach ($items as $entry) {
             if (preg_match('/^\[(\w+)\]$/', $entry, $matches) && is_dir($dir . DIRECTORY_SEPARATOR . $entry)) {
                 return [
                     'param' => $matches[1],
@@ -202,7 +216,13 @@ class Router
         if ($dir === false) {
             return null;
         }
-        foreach (scandir($dir) as $entry) {
+
+        $items = @scandir($dir);
+        if ($items === false) {
+            return null;
+        }
+
+        foreach ($items as $entry) {
             if (preg_match('/^\[(\w+)\]\.' . $method . '\.php$/', $entry, $matches)) {
                 return [
                     'param' => $matches[1],
