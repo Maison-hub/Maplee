@@ -7,7 +7,7 @@ class MapleeRequest
     /**
      * @param string $uri
      * @param string $method
-     * @param array<string, mixed> $params
+     * @param array<int|string, mixed> $params
      * @param array<string, mixed> $body
      */
     public function __construct(
@@ -35,7 +35,7 @@ class MapleeRequest
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<int|string, mixed>
      */
     public function getParams(): array
     {
