@@ -58,8 +58,11 @@ class MapleeRequest
      * @param mixed $default
      * @return mixed
      */
-    public function getBody(string $key, mixed $default = null): mixed
+    public function getBody(?string $key = null, mixed $default = null): mixed
     {
+        if ($key === null) {
+            return $this->body;
+        }
         return $this->body[$key] ?? $default;
     }
 }
