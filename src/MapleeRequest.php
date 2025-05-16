@@ -4,36 +4,59 @@ namespace Maplee;
 
 class MapleeRequest
 {
-    public string $uri;
-    public string $method;
-
-    /** @var array<int|string, mixed> */
-    public array $params;
-
-    /** @var array<string, mixed> */
-    public array $body;
+    /**
+     * @param string $uri
+     * @param string $method
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $body
+     */
+    public function __construct(
+        private string $uri,
+        private string $method,
+        private array $params,
+        private array $body
+    ) {}
 
     /**
-     * MapleeRequest constructor.
-     *
-     * @param string $uri The URI of the request.
-     * @param string $method The HTTP method of the request (e.g., GET, POST).
-     * @param array<int|string, mixed> $params The query parameters of the request.
-     * @param array<string, mixed> $body The body parameters of the request.
+     * @return string
      */
-    public function __construct(string $uri, string $method, array $params = [], array $body = [])
+    public function getUri(): string
     {
-        $this->uri = $uri;
-        $this->method = $method;
-        $this->params = $params;
-        $this->body = $body;
+        return $this->uri;
     }
 
+    /**
+     * @return string
+     */
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+
+    /**
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getParam(string $key, mixed $default = null): mixed
     {
         return $this->params[$key] ?? $default;
     }
 
+    /**
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getBody(string $key, mixed $default = null): mixed
     {
         return $this->body[$key] ?? $default;
