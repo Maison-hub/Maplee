@@ -15,7 +15,8 @@ class MapleeRequest
         private string $method,
         private array $params,
         private array $body
-    ) {}
+    ) {    
+    }
 
     /**
      * @return string
