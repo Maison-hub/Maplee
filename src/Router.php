@@ -155,12 +155,7 @@ class Router
      */
     protected function scanRoutes(string $basePath, string $prefix, array &$routes): void
     {
-        $items = @scandir($basePath);
-        if ($items === false) {
-            return;
-        }
-
-        foreach ($items as $item) {
+        foreach (scandir($basePath) as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }
@@ -186,13 +181,7 @@ class Router
         if ($dir === false) {
             return null;
         }
-
-        $items = @scandir($dir);
-        if ($items === false) {
-            return null;
-        }
-
-        foreach ($items as $entry) {
+        foreach (scandir($dir) as $entry) {
             if (preg_match('/^\[(\w+)\]$/', $entry, $matches) && is_dir($dir . DIRECTORY_SEPARATOR . $entry)) {
                 return [
                     'param' => $matches[1],
@@ -216,13 +205,7 @@ class Router
         if ($dir === false) {
             return null;
         }
-
-        $items = @scandir($dir);
-        if ($items === false) {
-            return null;
-        }
-
-        foreach ($items as $entry) {
+        foreach (scandir($dir) as $entry) {
             if (preg_match('/^\[(\w+)\]\.' . $method . '\.php$/', $entry, $matches)) {
                 return [
                     'param' => $matches[1],

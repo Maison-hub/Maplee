@@ -80,7 +80,7 @@ class RouterIntegrationTest extends TestCase
             };
         ');
 
-        // Route avec query parameters
+        // Route with query parameters
         mkdir($this->testRoutesPath . '/search');
         file_put_contents($this->testRoutesPath . '/search/index.php', '<?php
             return function($request) {
@@ -88,12 +88,67 @@ class RouterIntegrationTest extends TestCase
             };
         ');
 
-        // Route avec POST data
+        // Route with POST data
         mkdir($this->testRoutesPath . '/contact');
         file_put_contents($this->testRoutesPath . '/contact/index.post.php', '<?php
             return function($request) {
                 $body = $request->getBody();
                 return "Message from: " . ($body["email"] ?? "unknown");
+            };
+        ');
+
+        // Route avec paramètres adjacents
+        mkdir($this->testRoutesPath . '/articles');
+        file_put_contents($this->testRoutesPath . '/articles/[slug][date].php', '<?php
+            return function($request) {
+                $params = $request->getParams();
+                return "Article: " . $params["slug"] . " (Date: " . $params["date"] . ")";
+            };
+        ');
+
+        // Route avec préfixe statique
+        mkdir($this->testRoutesPath . '/users');
+        file_put_contents($this->testRoutesPath . '/users/user[uuid].php', '<?php
+            return function($request) {
+                $params = $request->getParams();
+                return "User UUID: " . $params["uuid"];
+            };
+        ');
+
+        // Route avec multiples paramètres sans séparateur
+        mkdir($this->testRoutesPath . '/products');
+        file_put_contents($this->testRoutesPath . '/products/item[category][id][variant].php', '<?php
+            return function($request) {
+                $params = $request->getParams();
+                return sprintf(
+                    "Product - Category: %s, ID: %s, Variant: %s",
+                    $params["category"],
+                    $params["id"],
+                    $params["variant"]
+                );
+            };
+        ');
+
+        // Route avec méthode spécifique et paramètres multiples
+        mkdir($this->testRoutesPath . '/api');
+        file_put_contents($this->testRoutesPath . '/api/[type]-[id].post.php', '<?php
+            return function($request) {
+                $params = $request->getParams();
+                return "API POST - Type: " . $params["type"] . ", ID: " . $params["id"];
+            };
+        ');
+
+        // Route avec trois paramètres
+        mkdir($this->testRoutesPath . '/products');
+        file_put_contents($this->testRoutesPath . '/products/[category]-[brand]-[id].php', '<?php
+            return function($request) {
+                $params = $request->getParams();
+                return sprintf(
+                    "Product - Category: %s, Brand: %s, ID: %s",
+                    $params["category"],
+                    $params["brand"],
+                    $params["id"]
+                );
             };
         ');
     }
@@ -182,6 +237,57 @@ class RouterIntegrationTest extends TestCase
         $response = ob_get_clean();
         
         $this->assertEquals('404 Not Found', $response);
+    }
+
+    public function testAdjacentParameters(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/articles/mon-article2024-03-20';
+        ob_start();
+        $this->router->handleRequest();
+        $response = ob_get_clean();
+        
+        $this->assertEquals('Article: mon-article (Date: 2024-03-20)', $response);
+    }
+
+    public function testStaticPrefixWithParameter(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/users/user123e4567-e89b-12d3-a456-426614174000';
+        ob_start();
+        $this->router->handleRequest();
+        $response = ob_get_clean();
+        
+        $this->assertEquals('User UUID: 123e4567-e89b-12d3-a456-426614174000', $response);
+    }
+
+    public function testMultipleParametersWithoutSeparator(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/products/itemelectronics123blue';
+        ob_start();
+        $this->router->handleRequest();
+        $response = ob_get_clean();
+        
+        $this->assertEquals('Product - Category: electronics, ID: 123, Variant: blue', $response);
+    }
+
+    public function testMethodSpecificWithMultipleParams(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/api/user-456';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        ob_start();
+        $this->router->handleRequest();
+        $response = ob_get_clean();
+        
+        $this->assertEquals('API POST - Type: user, ID: 456', $response);
+    }
+
+    public function testThreeParametersInFileName(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/products/electronics-samsung-789';
+        ob_start();
+        $this->router->handleRequest();
+        $response = ob_get_clean();
+        
+        $this->assertEquals('Product - Category: electronics, Brand: samsung, ID: 789', $response);
     }
 
     private function removeDirectory(string $path): void
