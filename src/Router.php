@@ -9,6 +9,15 @@ class Router
     protected string $routesPath;
     protected bool $useCache;
     protected ?string $cacheFile;
+
+    /**
+     * Cache of routes structure
+     * 
+     * @var array{
+     *     dynamic_dirs?: array<string, array<array{param: string, path: string}>>,
+     *     files?: array<string, array<string, array<array{name: string, path: string}>>>
+     * }
+     */
     protected array $routeCache = [];
     protected ?int $lastCacheUpdate = null;
 
@@ -42,7 +51,7 @@ class Router
      */
     protected function loadCache(): void
     {
-        if (!file_exists($this->cacheFile)) {
+        if ($this->cacheFile === null || !file_exists($this->cacheFile)) {
             $this->rebuildCache();
             return;
         }
@@ -71,12 +80,13 @@ class Router
      */
     protected function getCacheInfo(): array
     {
+        $cacheFile = $this->cacheFile ?? '';
         return [
             'enabled' => $this->useCache,
-            'cache_file' => $this->cacheFile,
+            'cache_file' => $cacheFile,
             'last_update' => $this->lastCacheUpdate ? date('Y-m-d H:i:s', $this->lastCacheUpdate) : null,
-            'file_exists' => file_exists($this->cacheFile),
-            'file_size' => file_exists($this->cacheFile) ? filesize($this->cacheFile) : 0,
+            'file_exists' => $cacheFile !== '' && file_exists($cacheFile),
+            'file_size' => ($cacheFile !== '' && file_exists($cacheFile)) ? filesize($cacheFile) : 0,
             'routes_count' => [
                 'dynamic_dirs' => isset($this->routeCache['dynamic_dirs'])
                     ? count($this->routeCache['dynamic_dirs'], COUNT_RECURSIVE)
@@ -94,6 +104,10 @@ class Router
      */
     protected function rebuildCache(): void
     {
+        if (!is_string($this->cacheFile) && $this->cacheFile === null) {
+            return;
+        }
+
         $this->routeCache = [];
         $this->scanRoutesForCache($this->routesPath, '');
 
@@ -103,14 +117,15 @@ class Router
         ];
 
         // Create cache directory if it doesn't exist
-        $cacheDir = dirname($this->cacheFile);
+        
+        $cacheDir = dirname(($this->cacheFile ?? Config::$cachePath));
         if (!is_dir($cacheDir)) {
             mkdir($cacheDir, 0777, true);
         }
 
         // Save cache to file
         file_put_contents(
-            $this->cacheFile,
+            $cacheDir,
             '<?php return ' . var_export($cache, true) . ';'
         );
 
@@ -119,10 +134,15 @@ class Router
 
     /**
      * Get the last modified time of all files in a directory
+     *
+     * @return int The last modified timestamp
      */
     protected function getLastModifiedTime(string $path): int
     {
         $lastModified = filemtime($path);
+        if ($lastModified === false) {
+            return 0;
+        }
 
         $items = @scandir($path);
         if ($items === false) {
@@ -139,7 +159,10 @@ class Router
                 $dirLastModified = $this->getLastModifiedTime($fullPath);
                 $lastModified = max($lastModified, $dirLastModified);
             } else {
-                $lastModified = max($lastModified, filemtime($fullPath));
+                $fileModified = filemtime($fullPath);
+                if ($fileModified !== false) {
+                    $lastModified = max($lastModified, $fileModified);
+                }
             }
         }
 
@@ -307,6 +330,8 @@ class Router
 
     /**
      * Resolve file from cache
+     *
+     * @param array<int, string> $segments The URL segments to resolve
      */
     protected function resolveFileFromCache(array $segments): ?string
     {
