@@ -14,7 +14,6 @@ class Config
     {
         $defaultPath = __DIR__ . '/../config/maplee.php';
         $file = $configPath ?? $defaultPath;
-
         if (file_exists($file)) {
             $config = include $file;
 
