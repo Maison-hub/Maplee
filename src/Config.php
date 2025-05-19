@@ -11,7 +11,7 @@ class Config
      * @return array<string, mixed> The loaded configuration.
      */
 
-    static public string $cachePath = '/../config/maplee.php';
+    public static string $cachePath = '/../config/maplee.php';
 
     /**
      *

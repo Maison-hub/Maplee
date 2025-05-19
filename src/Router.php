@@ -12,7 +12,7 @@ class Router
 
     /**
      * Cache of routes structure
-     * 
+     *
      * @var array{
      *     dynamic_dirs?: array<string, array<array{param: string, path: string}>>,
      *     files?: array<string, array<string, array<array{name: string, path: string}>>>
@@ -117,7 +117,7 @@ class Router
         ];
 
         // Create cache directory if it doesn't exist
-        
+
         $cacheDir = dirname(($this->cacheFile ?? Config::$cachePath));
         if (!is_dir($cacheDir)) {
             mkdir($cacheDir, 0777, true);
