@@ -78,8 +78,12 @@ class Router
             'file_exists' => file_exists($this->cacheFile),
             'file_size' => file_exists($this->cacheFile) ? filesize($this->cacheFile) : 0,
             'routes_count' => [
-                'dynamic_dirs' => isset($this->routeCache['dynamic_dirs']) ? count($this->routeCache['dynamic_dirs'], COUNT_RECURSIVE) : 0,
-                'files' => isset($this->routeCache['files']) ? count($this->routeCache['files'], COUNT_RECURSIVE) : 0
+                'dynamic_dirs' => isset($this->routeCache['dynamic_dirs'])
+                    ? count($this->routeCache['dynamic_dirs'], COUNT_RECURSIVE)
+                    : 0,
+                'files' => isset($this->routeCache['files'])
+                    ? count($this->routeCache['files'], COUNT_RECURSIVE)
+                    : 0
             ],
             'cached_routes' => $this->routeCache
         ];
@@ -108,7 +112,6 @@ class Router
         file_put_contents(
             $this->cacheFile,
             '<?php return ' . var_export($cache, true) . ';'
-
         );
 
         $this->lastCacheUpdate = $cache['timestamp'];
@@ -120,7 +123,7 @@ class Router
     protected function getLastModifiedTime(string $path): int
     {
         $lastModified = filemtime($path);
-        
+
         $items = @scandir($path);
         if ($items === false) {
             return $lastModified;
@@ -175,7 +178,7 @@ class Router
                 if (preg_match('/^(.+)\.(?:(get|post|put|delete|patch)\.)?php$/', $item, $matches)) {
                     $fileName = $matches[1];
                     $method = $matches[2] ?? 'get';
-                    
+
                     $this->routeCache['files'][$prefix][$method][] = [
                         'name' => $fileName,
                         'path' => $fullPath
@@ -217,7 +220,7 @@ class Router
         $path = $uri;
         $segments = explode('/', $path);
 
-        $resolvedFile = $this->useCache 
+        $resolvedFile = $this->useCache
             ? $this->resolveFileFromCache($segments)
             : $this->resolveFile($segments);
 
@@ -313,7 +316,7 @@ class Router
 
         foreach ($segments as $segment) {
             $nextPath = $current ? $current . '/' . $segment : $segment;
-            
+
             // Check for exact match in files at current path
             if (isset($this->routeCache['files'][$current][$method])) {
                 foreach ($this->routeCache['files'][$current][$method] as $file) {
