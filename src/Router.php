@@ -117,7 +117,6 @@ class Router
         ];
 
         // Create cache directory if it doesn't exist
-
         $cacheDir = dirname(($this->cacheFile ?? Config::$cachePath));
         if (!is_dir($cacheDir)) {
             mkdir($cacheDir, 0777, true);
@@ -125,7 +124,7 @@ class Router
 
         // Save cache to file
         file_put_contents(
-            $cacheDir,
+            $this->cacheFile,
             '<?php return ' . var_export($cache, true) . ';'
         );
 
