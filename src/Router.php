@@ -124,7 +124,7 @@ class Router
 
         // Save cache to file
         file_put_contents(
-            $this->cacheFile,
+            $this->cacheFile ?? Config::$cachePath,
             '<?php return ' . var_export($cache, true) . ';'
         );
 
