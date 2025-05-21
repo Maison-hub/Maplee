@@ -7,6 +7,19 @@ use Maplee\MapleeRequest;
 class Router
 {
     protected string $routesPath;
+    protected bool $useCache;
+    protected ?string $cacheFile;
+
+    /**
+     * Cache of routes structure
+     *
+     * @var array{
+     *     dynamic_dirs?: array<string, array<array{param: string, path: string}>>,
+     *     files?: array<string, array<string, array<array{name: string, path: string}>>>
+     * }
+     */
+    protected array $routeCache = [];
+    protected ?int $lastCacheUpdate = null;
 
     /**
      * @var array<int|string, mixed>
@@ -25,6 +38,176 @@ class Router
         $config = array_merge($fileConfig, $overrides);
 
         $this->routesPath = $config['routesPath'] ?? __DIR__ . '/../../routes';
+        $this->useCache = $config['useCache'] ?? true;
+        $this->cacheFile = $config['cacheFile'] ?? sys_get_temp_dir() . '/maplee_route_cache.php';
+
+        if ($this->useCache) {
+            $this->loadCache();
+        }
+    }
+
+    /**
+     * Load the route cache from file
+     */
+    protected function loadCache(): void
+    {
+        if ($this->cacheFile === null || !file_exists($this->cacheFile)) {
+            $this->rebuildCache();
+            return;
+        }
+
+        $cache = include $this->cacheFile;
+        if (!is_array($cache) || !isset($cache['timestamp']) || !isset($cache['routes'])) {
+            $this->rebuildCache();
+            return;
+        }
+
+        // Check if any route file has been modified since the cache was created
+        $lastModified = $this->getLastModifiedTime($this->routesPath);
+        if ($lastModified > $cache['timestamp']) {
+            $this->rebuildCache();
+            return;
+        }
+
+        $this->routeCache = $cache['routes'];
+        $this->lastCacheUpdate = $cache['timestamp'];
+    }
+
+    /**
+     * Get cache information for debugging
+     *
+     * @return array<string, mixed>
+     */
+    protected function getCacheInfo(): array
+    {
+        $cacheFile = $this->cacheFile ?? '';
+        return [
+            'enabled' => $this->useCache,
+            'cache_file' => $cacheFile,
+            'last_update' => $this->lastCacheUpdate ? date('Y-m-d H:i:s', $this->lastCacheUpdate) : null,
+            'file_exists' => $cacheFile !== '' && file_exists($cacheFile),
+            'file_size' => ($cacheFile !== '' && file_exists($cacheFile)) ? filesize($cacheFile) : 0,
+            'routes_count' => [
+                'dynamic_dirs' => isset($this->routeCache['dynamic_dirs'])
+                    ? count($this->routeCache['dynamic_dirs'], COUNT_RECURSIVE)
+                    : 0,
+                'files' => isset($this->routeCache['files'])
+                    ? count($this->routeCache['files'], COUNT_RECURSIVE)
+                    : 0
+            ],
+            'cached_routes' => $this->routeCache
+        ];
+    }
+
+    /**
+     * Rebuild the route cache
+     */
+    protected function rebuildCache(): void
+    {
+        if (!is_string($this->cacheFile) && $this->cacheFile === null) {
+            return;
+        }
+
+        $this->routeCache = [];
+        $this->scanRoutesForCache($this->routesPath, '');
+
+        $cache = [
+            'timestamp' => time(),
+            'routes' => $this->routeCache
+        ];
+
+        // Create cache directory if it doesn't exist
+        $cacheDir = dirname(($this->cacheFile ?? Config::$cachePath));
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0777, true);
+        }
+
+        // Save cache to file
+        file_put_contents(
+            $this->cacheFile ?? Config::$cachePath,
+            '<?php return ' . var_export($cache, true) . ';'
+        );
+
+        $this->lastCacheUpdate = $cache['timestamp'];
+    }
+
+    /**
+     * Get the last modified time of all files in a directory
+     *
+     * @return int The last modified timestamp
+     */
+    protected function getLastModifiedTime(string $path): int
+    {
+        $lastModified = filemtime($path);
+        if ($lastModified === false) {
+            return 0;
+        }
+
+        $items = @scandir($path);
+        if ($items === false) {
+            return $lastModified;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $fullPath = $path . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($fullPath)) {
+                $dirLastModified = $this->getLastModifiedTime($fullPath);
+                $lastModified = max($lastModified, $dirLastModified);
+            } else {
+                $fileModified = filemtime($fullPath);
+                if ($fileModified !== false) {
+                    $lastModified = max($lastModified, $fileModified);
+                }
+            }
+        }
+
+        return $lastModified;
+    }
+
+    /**
+     * Scan routes for cache building
+     */
+    protected function scanRoutesForCache(string $basePath, string $prefix): void
+    {
+        $items = @scandir($basePath);
+        if ($items === false) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $fullPath = $basePath . DIRECTORY_SEPARATOR . $item;
+            $relativePath = $prefix ? $prefix . '/' . $item : $item;
+
+            if (is_dir($fullPath)) {
+                // Handle dynamic directories
+                if (preg_match('/^\[(\w+)\]$/', $item, $matches)) {
+                    $this->routeCache['dynamic_dirs'][$prefix][] = [
+                        'param' => $matches[1],
+                        'path' => $fullPath
+                    ];
+                }
+                $this->scanRoutesForCache($fullPath, $relativePath);
+            } else {
+                // Handle files
+                if (preg_match('/^(.+)\.(?:(get|post|put|delete|patch)\.)?php$/', $item, $matches)) {
+                    $fileName = $matches[1];
+                    $method = $matches[2] ?? 'get';
+
+                    $this->routeCache['files'][$prefix][$method][] = [
+                        'name' => $fileName,
+                        'path' => $fullPath
+                    ];
+                }
+            }
+        }
     }
 
     /**
@@ -43,14 +226,25 @@ class Router
             echo json_encode([
                 "routes-directory" => $this->routesPath,
                 "routes" => $this->listRoutes(),
+                "cache" => $this->getCacheInfo()
             ], JSON_PRETTY_PRINT);
             return;
         }
+
+        // Add a dedicated endpoint for cache information
+        if ($uri === '/__maplee/cache') {
+            header('Content-Type: application/json');
+            echo json_encode($this->getCacheInfo(), JSON_PRETTY_PRINT);
+            return;
+        }
+
         $uri = trim((string) $uri, '/');
         $path = $uri;
         $segments = explode('/', $path);
 
-        $resolvedFile = $this->resolveFile($segments);
+        $resolvedFile = $this->useCache
+            ? $this->resolveFileFromCache($segments)
+            : $this->resolveFile($segments);
 
         if ($resolvedFile && file_exists($resolvedFile)) {
             if (isset($_SERVER['QUERY_STRING'])) {
@@ -130,6 +324,80 @@ class Router
         } elseif (file_exists($indexDefault)) {
             return $indexDefault;
         }
+        return null;
+    }
+
+    /**
+     * Resolve file from cache
+     *
+     * @param array<int, string> $segments The URL segments to resolve
+     */
+    protected function resolveFileFromCache(array $segments): ?string
+    {
+        $current = '';
+        $method = strtolower($_SERVER['REQUEST_METHOD']);
+        $this->params = [];
+
+        foreach ($segments as $segment) {
+            $nextPath = $current ? $current . '/' . $segment : $segment;
+
+            // Check for exact match in files at current path
+            if (isset($this->routeCache['files'][$current][$method])) {
+                foreach ($this->routeCache['files'][$current][$method] as $file) {
+                    if ($file['name'] === $segment) {
+                        return $file['path'];
+                    }
+                }
+            }
+            // Check for exact match in files at next path
+            if (isset($this->routeCache['files'][$nextPath][$method])) {
+                foreach ($this->routeCache['files'][$nextPath][$method] as $file) {
+                    if ($file['name'] === $segment) {
+                        return $file['path'];
+                    }
+                }
+            }
+
+            // Check for dynamic files
+            if (isset($this->routeCache['files'][$current][$method])) {
+                foreach ($this->routeCache['files'][$current][$method] as $file) {
+                    if (preg_match('/^\[(\w+)\]$/', $file['name'], $matches)) {
+                        $this->params[$matches[1]] = $segment;
+                        return $file['path'];
+                    }
+                }
+            }
+            // Check for dynamic files with default GET method
+            if ($method === 'get' && isset($this->routeCache['files'][$current]['get'])) {
+                foreach ($this->routeCache['files'][$current]['get'] as $file) {
+                    if (preg_match('/^\[(\w+)\]$/', $file['name'], $matches)) {
+                        $this->params[$matches[1]] = $segment;
+                        return $file['path'];
+                    }
+                }
+            }
+
+            // Check for dynamic directories
+            if (isset($this->routeCache['dynamic_dirs'][$current])) {
+                foreach ($this->routeCache['dynamic_dirs'][$current] as $dir) {
+                    $this->params[$dir['param']] = $segment;
+                    $current = $nextPath;
+                    continue 2;
+                }
+            }
+
+            $current = $nextPath;
+        }
+
+        // Check for index files in the final directory
+        if (isset($this->routeCache['files'][$current][$method])) {
+            foreach ($this->routeCache['files'][$current][$method] as $file) {
+                if ($file['name'] === 'index') {
+                    return $file['path'];
+                }
+            }
+        }
+
         return null;
     }
 

@@ -19,7 +19,7 @@ class RouterIntegrationTest extends TestCase
         $this->testRoutesPath = __DIR__ . '/../fixtures/test-routes';
         $this->createTestRoutes();
         
-        $this->router = new Router(null, ['routesPath' => $this->testRoutesPath]);
+        $this->router = new Router(null, overrides: ['routesPath' => $this->testRoutesPath, 'useCache' => false]);
         
         // Simuler les variables serveur
         $_SERVER['REQUEST_URI'] = '/';

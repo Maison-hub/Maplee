@@ -30,5 +30,14 @@
     "phpunit/phpunit": "^10.5",
     "phpstan/phpstan": "^1.10",
     "squizlabs/php_codesniffer": "^3.7"
+  },
+  "scripts": {
+    "phpcs:fix": "phpcbf --standard=phpcs.xml",
+    "phpcs:check": "phpcs --standard=phpcs.xml",
+    "test": "phpunit",
+    "test:verbose": "phpunit --testdox",
+    "test:debug": "phpunit --debug",
+    "test:full": "phpunit --testdox --debug --verbose",
+    "phpstan": "phpstan"
   }
 }
