@@ -12,6 +12,7 @@ class RouterIntegrationTest extends TestCase
 {
     private string $testRoutesPath;
     private Router $router;
+    private array $originalServer;
 
     protected function setUp(): void
     {
@@ -19,7 +20,11 @@ class RouterIntegrationTest extends TestCase
         $this->testRoutesPath = __DIR__ . '/../fixtures/test-routes';
         $this->createTestRoutes();
         
-        $this->router = new Router(null, overrides: ['routesPath' => $this->testRoutesPath, 'useCache' => false]);
+        $this->originalServer = $_SERVER;
+        $this->router = Router::create(null, [
+            'routesPath' => $this->testRoutesPath,
+            'useCache' => false
+        ]);
         
         // Simuler les variables serveur
         $_SERVER['REQUEST_URI'] = '/';
@@ -30,6 +35,7 @@ class RouterIntegrationTest extends TestCase
     protected function tearDown(): void
     {
         $this->removeDirectory($this->testRoutesPath);
+        $_SERVER = $this->originalServer;
         parent::tearDown();
     }
 
@@ -182,6 +188,111 @@ class RouterIntegrationTest extends TestCase
         $response = ob_get_clean();
         
         $this->assertEquals('404 Not Found', $response);
+    }
+
+    public function testHandleStaticRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/about';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("About Page", $output);
+    }
+
+    public function testHandleDynamicRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/users/123';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("User Profile: 123", $output);
+    }
+
+    public function testHandleMethodSpecificRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/api/users';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['name' => 'John'];
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals('Create User: {"name":"John"}', $output);
+    }
+
+    public function testHandleIndexRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/blog';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("Blog Index", $output);
+    }
+
+    public function testHandleDynamicDirectoryRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/categories/tech';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("Category: tech", $output);
+    }
+
+    public function testHandleNonExistentRoute(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/non-existent';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("404 Not Found", $output);
+    }
+
+    public function testDebugRoutesEndpoint(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/__maplee/routes';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+        $response = json_decode($output, true);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('routes-directory', $response);
+        $this->assertArrayHasKey('routes', $response);
+        $this->assertArrayHasKey('cache', $response);
+    }
+
+    public function testDebugCacheEndpoint(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/__maplee/cache';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+        $response = json_decode($output, true);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('enabled', $response);
+        $this->assertArrayHasKey('cache_file', $response);
+        $this->assertArrayHasKey('last_update', $response);
     }
 
     private function removeDirectory(string $path): void
