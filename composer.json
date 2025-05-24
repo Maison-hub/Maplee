@@ -37,7 +37,7 @@
     "test": "phpunit",
     "test:verbose": "phpunit --testdox",
     "test:debug": "phpunit --debug",
-    "test:full": "phpunit --testdox --debug --verbose",
+    "test:full": "phpunit --testdox --debug",
     "phpstan": "phpstan"
   }
 }
