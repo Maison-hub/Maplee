@@ -62,14 +62,21 @@ class RouteCacheTest extends TestCase
         $firstCacheInfo = $cache->getCacheInfo();
         $firstUpdate = $firstCacheInfo['last_update'];
 
-        // Simulate file modification by touching a route file
-        touch($this->testRoutesPath . '/index.php');
-        sleep(1); // Ensure timestamp difference
-
+        // Simulate file modification by writing to a route file
+        $testFile = $this->testRoutesPath . '/index.php';
+        file_put_contents($testFile, '<?php echo "Modified";', FILE_APPEND);
+        
+        // Force a small delay to ensure filesystem updates
+        usleep(100000); // 100ms delay
+        
         $cache->loadCache($this->testRoutesPath);
         $secondCacheInfo = $cache->getCacheInfo();
 
-        $this->assertNotEquals($firstUpdate, $secondCacheInfo['last_update']);
+        // Clean up the test file
+        file_put_contents($testFile, '<?php echo "Test";');
+
+        $this->assertNotEquals($firstUpdate, $secondCacheInfo['last_update'], 
+            'Cache should be rebuilt when route files are modified');
     }
 
     public function testCacheStructure(): void
