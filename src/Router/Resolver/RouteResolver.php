@@ -154,12 +154,12 @@ class RouteResolver
 
                 if (file_exists($fileMethod)) {
                     return $fileMethod;
-                } elseif (file_exists($fileDefault)) {
+                } elseif (file_exists($fileDefault) && $method === 'get') {
                     return $fileDefault;
                 } elseif ($dynamicFile) {
                     $this->params[$dynamicFile['param']] = $segment;
                     return $dynamicFile['path'];
-                } elseif ($dynamicFileDefault) {
+                } elseif ($dynamicFileDefault && $method === 'get') {
                     $this->params[$dynamicFileDefault['param']] = $segment;
                     return $dynamicFileDefault['path'];
                 }
@@ -172,7 +172,7 @@ class RouteResolver
 
         if (file_exists($indexMethod)) {
             return $indexMethod;
-        } elseif (file_exists($indexDefault)) {
+        } elseif (file_exists($indexDefault) && $method === 'get') {
             return $indexDefault;
         }
         return null;

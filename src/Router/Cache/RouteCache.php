@@ -110,7 +110,7 @@ class RouteCache
         $this->scanRoutesForCache($routesPath, '');
 
         $cache = [
-            'timestamp' => time(),
+            'timestamp' => (int)(microtime(true) * 1000),
             'routes' => $this->routeCache
         ];
 
@@ -200,3 +200,4 @@ class RouteCache
         }
     }
 }
+ 

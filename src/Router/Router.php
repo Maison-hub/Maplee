@@ -109,7 +109,7 @@ class Router
      *
      * @param string $basePath
      * @param string $prefix
-     * @param array<string> $routes
+     * @param array<string> &$routes
      */
     protected function scanRoutes(string $basePath, string $prefix, array &$routes): void
     {
@@ -126,8 +126,13 @@ class Router
             $fullPath = $basePath . DIRECTORY_SEPARATOR . $item;
             if (is_dir($fullPath)) {
                 $this->scanRoutes($fullPath, $prefix . '/' . $item, $routes);
-            } elseif ($item === 'index.php') {
+            } elseif ($item === 'index.php' || $item === 'index.get.php') {
                 $routes[] = $prefix ?: '/';
+            } elseif (preg_match('/^(.+)\.(?:(get|post|put|delete|patch)\.)?php$/', $item, $matches)) {
+                $route = $prefix ? $prefix . '/' . $matches[1] : '/' . $matches[1];
+                if (!in_array($route, $routes)) {
+                    $routes[] = $route;
+                }
             }
         }
     }

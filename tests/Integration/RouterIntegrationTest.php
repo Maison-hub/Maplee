@@ -41,7 +41,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("About Page", $output);
     }
 
@@ -53,7 +53,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("User Profile: 123", $output);
     }
 
@@ -66,7 +66,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals('Create User: {"name":"John"}', $output);
     }
 
@@ -78,7 +78,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("Blog Index", $output);
     }
 
@@ -90,7 +90,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("Category: tech", $output);
     }
 
@@ -103,7 +103,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("User Profile: 123", $output);
     }
 
@@ -115,7 +115,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("404 Not Found", $output);
     }
 
@@ -127,7 +127,7 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
-
+        
         $this->assertEquals("404 Not Found", $output);
     }
 
