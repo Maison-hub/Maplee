@@ -24,7 +24,7 @@ class RouteCache
         if (!is_dir($cacheDir) || !is_writable($cacheDir)) {
             $cacheFile = sys_get_temp_dir() . '/maplee_route_cache.php';
         }
-        
+
         $this->cacheFile = $cacheFile;
         $this->useCache = $useCache;
     }
