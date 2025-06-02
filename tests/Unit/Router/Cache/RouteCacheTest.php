@@ -101,14 +101,16 @@ class RouteCacheTest extends TestCase
 
     public function testInvalidCacheFile(): void
     {
-        $invalidCacheFile = '/invalid/path/cache.php';
+        // Create a cache file in a directory that doesn't exist
+        $invalidCacheFile = sys_get_temp_dir() . '/invalid/path/cache.php';
         $cache = new RouteCache($invalidCacheFile, true);
         
         // Should not throw exception but create cache in temp directory
         $cache->loadCache($this->testRoutesPath);
         
         $cacheInfo = $cache->getCacheInfo();
-        $this->assertTrue($cacheInfo['enabled']);
-        $this->assertTrue($cacheInfo['file_exists']);
+        $this->assertTrue($cacheInfo['enabled'], 'Cache should be enabled');
+        $this->assertTrue($cacheInfo['file_exists'], 'Cache file should exist');
+        $this->assertStringStartsWith(sys_get_temp_dir(), $cacheInfo['cache_file'], 'Cache file should be in temp directory');
     }
 } 
