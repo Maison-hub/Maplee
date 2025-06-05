@@ -5,7 +5,8 @@ namespace Maplee\Router;
 use Maplee\Router\Cache\RouteCache;
 use Maplee\Router\Config\RouterConfig;
 use Maplee\Router\Resolver\RouteResolver;
-use Maplee\MapleeRequest;
+use Maplee\Http\Request;
+use Maplee\Http\Response;
 
 class Router
 {
@@ -37,58 +38,61 @@ class Router
      */
     public function handleRequest(): void
     {
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $request = Request::fromGlobals();
+        
+        $response = new Response();
 
-        // Return debug information about the routes
-        if ($uri === '/__maplee/routes') {
-            header('Content-Type: application/json');
-            echo json_encode([
-                "routes-directory" => $this->routesPath,
-                "routes" => $this->listRoutes(),
-                "cache" => $this->routeCache->getCacheInfo()
-            ], JSON_PRETTY_PRINT);
+        if ($request->getUri()->getPath() === '/__maplee/routes') {
+            $response = $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withContent(json_encode([
+                    "routes-directory" => $this->routesPath,
+                    "routes" => $this->listRoutes(),
+                    "cache" => $this->routeCache->getCacheInfo()
+                ], JSON_PRETTY_PRINT));
+            $response->send();
             return;
         }
 
         // Add a dedicated endpoint for cache information
-        if ($uri === '/__maplee/cache') {
+        if ($request->getUri()->getPath() === '/__maplee/cache') {
             header('Content-Type: application/json');
             echo json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT);
             return;
         }
 
-        $uri = trim((string) $uri, '/');
-        $segments = explode('/', $uri);
+        $uri = $request->getUri()->getPath();
+        $method = $request->getMethod();
+        $segments = explode('/', trim($uri, '/'));
 
         $resolvedFile = $this->routeResolver->resolve(
             $segments,
-            $_SERVER['REQUEST_METHOD'],
+            $method,
             $this->routeCache->getRouteCache()
         );
 
         if ($resolvedFile && file_exists($resolvedFile)) {
             $params = $this->routeResolver->getParams();
-            if (isset($_SERVER['QUERY_STRING'])) {
-                parse_str($_SERVER['QUERY_STRING'], $queryParams);
-                $params = array_merge($params, $queryParams);
-            }
-
-            $request = new MapleeRequest(
-                $uri,
-                $_SERVER['REQUEST_METHOD'],
-                $params,
-                $_POST
-            );
-
+            $queryParams = [];
+            parse_str($request->getUri()->getQuery(), $queryParams);
+            $params = array_merge($params, $queryParams);
+            
             $result = include $resolvedFile;
-
+            
             if (is_callable($result)) {
                 $response = $result($request);
-                echo $response;
+                if ($response instanceof ResponseInterface) {
+                    $response->send();
+                } else {
+                    $response = (new Response())->withContent((string) $response);
+                    $response->send();
+                }
             }
         } else {
-            http_response_code(404);
-            echo "404 Not Found";
+            $response = (new Response())
+                ->withStatus(404)
+                ->withContent('404 Not Found');
+            $response->send();
         }
     }
 

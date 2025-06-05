@@ -2,7 +2,6 @@
 
 namespace Maplee;
 
-use JetBrains\PhpStorm\NoReturn;
 use Maplee\MapleeRequest;
 
 class RouteHandler
