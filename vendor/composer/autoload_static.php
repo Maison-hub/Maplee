@@ -18,6 +18,11 @@ class ComposerStaticInit8abd6f340abd620835847d58b70d8e9a
             'Psr\\Http\\Message\\' => 17,
             'PhpParser\\' => 10,
         ),
+        'N' => 
+        array (
+            'Nyholm\\Psr7\\' => 12,
+            'Nyholm\\Psr7Server\\' => 18,
+        ),
         'M' => 
         array (
             'Maplee\\Tests\\' => 13,
@@ -38,6 +43,14 @@ class ComposerStaticInit8abd6f340abd620835847d58b70d8e9a
         'PhpParser\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
+        ),
+        'Nyholm\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7/src',
+        ),
+        'Nyholm\\Psr7Server\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7-server/src',
         ),
         'Maplee\\Tests\\' => 
         array (
