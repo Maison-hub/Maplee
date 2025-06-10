@@ -7,6 +7,7 @@ use Maplee\Router\Config\RouterConfig;
 use Maplee\Router\Resolver\RouteResolver;
 use Maplee\Http\Factory\ServerRequestFactory;
 use Maplee\Http\Factory\ResponseFactory;
+use Maplee\Http\Factory\UriFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -17,6 +18,7 @@ class Router
     protected RouteResolver $routeResolver;
     protected ServerRequestFactory $serverRequestFactory;
     protected ResponseFactory $responseFactory;
+    protected UriFactory $uriFactory;
 
     /**
      * Router constructor.
@@ -33,6 +35,7 @@ class Router
         $this->routeResolver = new RouteResolver($this->routesPath);
         $this->serverRequestFactory = new ServerRequestFactory();
         $this->responseFactory = new ResponseFactory();
+        $this->uriFactory = new UriFactory();
 
         if ($config['useCache']) {
             $this->routeCache->loadCache($this->routesPath);
@@ -46,7 +49,7 @@ class Router
     {
         $request = $this->serverRequestFactory->createServerRequestFromGlobals();
         $response = $this->responseFactory->createResponse();
-        
+
         if ($request->getUri()->getPath() === '/__maplee/routes') {
             $response = $response
                 ->withHeader('Content-Type', 'application/json')
@@ -83,38 +86,35 @@ class Router
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $params = array_merge($params, $queryParams);
-            
+
             // Injecter les paramètres dans la requête
             foreach ($params as $key => $value) {
                 $request = $request->withAttribute($key, $value);
             }
-            
+
             $result = include $resolvedFile;
-            
+
             if (is_callable($result)) {
                 $routeResponse = $result($request, $response);
-                
-                // Si la route retourne une chaîne, on la met dans le corps de la réponse
+
                 if (is_string($routeResponse)) {
+                    // If the route returns a string, we set it as the body of the response
                     $response = $response->withBody($this->createStream($routeResponse));
-                }
-                // Si la route retourne un tableau, on le convertit en JSON
-                elseif (is_array($routeResponse)) {
+                } elseif (is_array($routeResponse)) {
+                    // If the route returns an array, we assume it's JSON data
                     $response = $response
                         ->withHeader('Content-Type', 'application/json')
                         ->withBody($this->createStream(json_encode($routeResponse)));
-                }
-                // Si la route retourne une Response, on l'utilise
-                elseif ($routeResponse instanceof ResponseInterface) {
+                } elseif ($routeResponse instanceof ResponseInterface) {
+                    // If the route returns a ResponseInterface, we use it directly
                     $response = $routeResponse;
                 }
-                // Si la route retourne null, on garde la réponse par défaut
-                
+                // If the route returns something else, we ignore it
                 $this->emitResponse($response);
                 return;
             }
         }
-        
+
         $response = $this->responseFactory->createResponse(404)
             ->withBody($this->createStream('404 Not Found'));
         $this->emitResponse($response);

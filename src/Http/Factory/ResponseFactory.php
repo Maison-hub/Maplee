@@ -19,4 +19,4 @@ class ResponseFactory implements ResponseFactoryInterface
     {
         return $this->factory->createResponse($code, $reasonPhrase);
     }
-} 
+}
