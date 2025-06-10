@@ -9,7 +9,6 @@ use Maplee\Http\Factory\ServerRequestFactory;
 use Maplee\Http\Factory\ResponseFactory;
 use Maplee\Http\Factory\UriFactory;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 
 class Router
 {
@@ -49,24 +48,35 @@ class Router
     {
         $request = $this->serverRequestFactory->createServerRequestFromGlobals();
         $response = $this->responseFactory->createResponse();
-
+        
         if ($request->getUri()->getPath() === '/__maplee/routes') {
+            $jsonData = json_encode([
+                "routes-directory" => $this->routesPath,
+                "routes" => $this->listRoutes(),
+                "cache" => $this->routeCache->getCacheInfo()
+            ], JSON_PRETTY_PRINT);
+            
+            if ($jsonData === false) {
+                throw new \RuntimeException('Failed to encode routes data to JSON');
+            }
+            
             $response = $response
                 ->withHeader('Content-Type', 'application/json')
-                ->withBody($this->createStream(json_encode([
-                    "routes-directory" => $this->routesPath,
-                    "routes" => $this->listRoutes(),
-                    "cache" => $this->routeCache->getCacheInfo()
-                ], JSON_PRETTY_PRINT)));
+                ->withBody($this->createStream($jsonData));
             $this->emitResponse($response);
             return;
         }
 
-        // Add a dedicated endpoint for cache information
         if ($request->getUri()->getPath() === '/__maplee/cache') {
+            $jsonData = json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT);
+            
+            if ($jsonData === false) {
+                throw new \RuntimeException('Failed to encode cache data to JSON');
+            }
+            
             $response = $response
                 ->withHeader('Content-Type', 'application/json')
-                ->withBody($this->createStream(json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT)));
+                ->withBody($this->createStream($jsonData));
             $this->emitResponse($response);
             return;
         }
@@ -86,35 +96,42 @@ class Router
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $params = array_merge($params, $queryParams);
-
+            
             // Injecter les paramètres dans la requête
             foreach ($params as $key => $value) {
-                $request = $request->withAttribute($key, $value);
+                $request = $request->withAttribute((string) $key, $value);
             }
-
+            
             $result = include $resolvedFile;
-
+            
             if (is_callable($result)) {
                 $routeResponse = $result($request, $response);
-
+                
+                // Si la route retourne une chaîne, on la met dans le corps de la réponse
                 if (is_string($routeResponse)) {
-                    // If the route returns a string, we set it as the body of the response
                     $response = $response->withBody($this->createStream($routeResponse));
-                } elseif (is_array($routeResponse)) {
-                    // If the route returns an array, we assume it's JSON data
+                }
+                // Si la route retourne un tableau, on le convertit en JSON
+                elseif (is_array($routeResponse)) {
+                    $jsonData = json_encode($routeResponse);
+                    if ($jsonData === false) {
+                        throw new \RuntimeException('Failed to encode route response to JSON');
+                    }
                     $response = $response
                         ->withHeader('Content-Type', 'application/json')
-                        ->withBody($this->createStream(json_encode($routeResponse)));
-                } elseif ($routeResponse instanceof ResponseInterface) {
-                    // If the route returns a ResponseInterface, we use it directly
+                        ->withBody($this->createStream($jsonData));
+                }
+                // Si la route retourne une Response, on l'utilise
+                elseif ($routeResponse instanceof ResponseInterface) {
                     $response = $routeResponse;
                 }
-                // If the route returns something else, we ignore it
+                // Si la route retourne null, on garde la réponse par défaut
+                
                 $this->emitResponse($response);
                 return;
             }
         }
-
+        
         $response = $this->responseFactory->createResponse(404)
             ->withBody($this->createStream('404 Not Found'));
         $this->emitResponse($response);

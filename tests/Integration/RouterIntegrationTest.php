@@ -3,15 +3,17 @@
 namespace Maplee\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use Maplee\Router;
+use Maplee\Router\Router;
 
 /**
- * @covers \Maplee\Router
+ * @covers \Maplee\Router\Router
  */
 class RouterIntegrationTest extends TestCase
 {
     private Router $router;
+    /** @var array<string, mixed> */
     private array $originalServer;
+    /** @var array<string, mixed> */
     private array $originalPost;
 
     protected function setUp(): void
@@ -20,7 +22,7 @@ class RouterIntegrationTest extends TestCase
         $this->originalServer = $_SERVER;
         $this->originalPost = $_POST;
         
-        $this->router = Router::create(null, [
+        $this->router = new Router(null, [
             'routesPath' => __DIR__ . '/../fixtures/routes',
             'useCache' => false
         ]);
@@ -139,7 +141,15 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
+        
+        if ($output === false) {
+            $this->fail('Failed to capture output');
+        }
+        
         $response = json_decode($output, true);
+        if ($response === null) {
+            $this->fail('Failed to decode JSON response');
+        }
 
         $this->assertIsArray($response);
         $this->assertArrayHasKey('routes-directory', $response);
@@ -157,7 +167,15 @@ class RouterIntegrationTest extends TestCase
         ob_start();
         $this->router->handleRequest();
         $output = ob_get_clean();
+        
+        if ($output === false) {
+            $this->fail('Failed to capture output');
+        }
+        
         $response = json_decode($output, true);
+        if ($response === null) {
+            $this->fail('Failed to decode JSON response');
+        }
 
         $this->assertIsArray($response);
         $this->assertArrayHasKey('enabled', $response);

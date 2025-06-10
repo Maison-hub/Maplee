@@ -25,6 +25,12 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
         );
     }
 
+    /**
+     * @param string $method
+     * @param string|UriInterface $uri
+     * @param array<string, mixed> $serverParams
+     * @return ServerRequestInterface
+     */
     public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface
     {
         if (is_string($uri)) {

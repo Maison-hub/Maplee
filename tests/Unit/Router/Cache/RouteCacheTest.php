@@ -60,7 +60,7 @@ class RouteCacheTest extends TestCase
         $cache->loadCache($this->testRoutesPath);
 
         $firstCacheInfo = $cache->getCacheInfo();
-        $firstRoutes = $firstCacheInfo['cached_routes'] ?? [];
+        $firstRoutes = $firstCacheInfo['cached_routes'];
 
         // Simulate file modification by touching a route file
         $testFile = $this->testRoutesPath . '/index.php';
@@ -74,7 +74,7 @@ class RouteCacheTest extends TestCase
         // Reload cache
         $cache->loadCache($this->testRoutesPath);
         $secondCacheInfo = $cache->getCacheInfo();
-        $secondRoutes = $secondCacheInfo['cached_routes'] ?? [];
+        $secondRoutes = $secondCacheInfo['cached_routes'];
 
         // Verify that the cache was rebuilt
         $this->assertNotEquals($firstRoutes, $secondRoutes, 'Cache should be rebuilt when route files are modified');

@@ -21,7 +21,10 @@ class RouteResolver
      *
      * @param array<string> $segments
      * @param string $method
-     * @param array<string, mixed> $routeCache
+     * @param array{
+     *     dynamic_dirs?: array<string, array<array{param: string, path: string}>>,
+     *     files?: array<string, array<string, array<array{name: string, path: string}>>>
+     * } $routeCache
      * @return string|null
      */
     public function resolve(array $segments, string $method, array $routeCache = []): ?string
@@ -50,7 +53,10 @@ class RouteResolver
      *
      * @param array<string> $segments
      * @param string $method
-     * @param array<string, mixed> $routeCache
+     * @param array{
+     *     dynamic_dirs?: array<string, array<array{param: string, path: string}>>,
+     *     files?: array<string, array<string, array<array{name: string, path: string}>>>
+     * } $routeCache
      * @return string|null
      */
     protected function resolveFromCache(array $segments, string $method, array $routeCache): ?string
