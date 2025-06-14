@@ -5,13 +5,19 @@ namespace Maplee\Router;
 use Maplee\Router\Cache\RouteCache;
 use Maplee\Router\Config\RouterConfig;
 use Maplee\Router\Resolver\RouteResolver;
-use Maplee\MapleeRequest;
+use Maplee\Http\Factory\ServerRequestFactory;
+use Maplee\Http\Factory\ResponseFactory;
+use Maplee\Http\Factory\UriFactory;
+use Psr\Http\Message\ResponseInterface;
 
 class Router
 {
     protected string $routesPath;
     protected RouteCache $routeCache;
     protected RouteResolver $routeResolver;
+    protected ServerRequestFactory $serverRequestFactory;
+    protected ResponseFactory $responseFactory;
+    protected UriFactory $uriFactory;
 
     /**
      * Router constructor.
@@ -26,6 +32,9 @@ class Router
         $this->routesPath = $config['routesPath'];
         $this->routeCache = new RouteCache($config['cacheFile'], $config['useCache']);
         $this->routeResolver = new RouteResolver($this->routesPath);
+        $this->serverRequestFactory = new ServerRequestFactory();
+        $this->responseFactory = new ResponseFactory();
+        $this->uriFactory = new UriFactory();
 
         if ($config['useCache']) {
             $this->routeCache->loadCache($this->routesPath);
@@ -37,59 +46,123 @@ class Router
      */
     public function handleRequest(): void
     {
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $request = $this->serverRequestFactory->createServerRequestFromGlobals();
+        $response = $this->responseFactory->createResponse();
 
-        // Return debug information about the routes
-        if ($uri === '/__maplee/routes') {
-            header('Content-Type: application/json');
-            echo json_encode([
+        if ($request->getUri()->getPath() === '/__maplee/routes') {
+            $jsonData = json_encode([
                 "routes-directory" => $this->routesPath,
                 "routes" => $this->listRoutes(),
                 "cache" => $this->routeCache->getCacheInfo()
             ], JSON_PRETTY_PRINT);
+
+            if ($jsonData === false) {
+                throw new \RuntimeException('Failed to encode routes data to JSON');
+            }
+
+            $response = $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withBody($this->createStream($jsonData));
+            $this->emitResponse($response);
             return;
         }
 
-        // Add a dedicated endpoint for cache information
-        if ($uri === '/__maplee/cache') {
-            header('Content-Type: application/json');
-            echo json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT);
+        if ($request->getUri()->getPath() === '/__maplee/cache') {
+            $jsonData = json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT);
+
+            if ($jsonData === false) {
+                throw new \RuntimeException('Failed to encode cache data to JSON');
+            }
+
+            $response = $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withBody($this->createStream($jsonData));
+            $this->emitResponse($response);
             return;
         }
 
-        $uri = trim((string) $uri, '/');
-        $segments = explode('/', $uri);
+        $uri = $request->getUri()->getPath();
+        $method = $request->getMethod();
+        $segments = explode('/', trim($uri, '/'));
 
         $resolvedFile = $this->routeResolver->resolve(
             $segments,
-            $_SERVER['REQUEST_METHOD'],
+            $method,
             $this->routeCache->getRouteCache()
         );
 
         if ($resolvedFile && file_exists($resolvedFile)) {
             $params = $this->routeResolver->getParams();
-            if (isset($_SERVER['QUERY_STRING'])) {
-                parse_str($_SERVER['QUERY_STRING'], $queryParams);
-                $params = array_merge($params, $queryParams);
-            }
+            $queryParams = [];
+            parse_str($request->getUri()->getQuery(), $queryParams);
+            $params = array_merge($params, $queryParams);
 
-            $request = new MapleeRequest(
-                $uri,
-                $_SERVER['REQUEST_METHOD'],
-                $params,
-                $_POST
-            );
+            // Injecter les paramètres dans la requête
+            foreach ($params as $key => $value) {
+                $request = $request->withAttribute((string) $key, $value);
+            }
 
             $result = include $resolvedFile;
 
             if (is_callable($result)) {
-                $response = $result($request);
-                echo $response;
+                $routeResponse = $result($request, $response);
+
+                if (is_string($routeResponse)) {
+                    // If the route returns a string, we put it in the response body
+                    $response = $response->withBody($this->createStream($routeResponse));
+                } elseif (is_array($routeResponse)) {
+                    // If the route returns an array, we encode it to JSON
+                    $jsonData = json_encode($routeResponse);
+                    if ($jsonData === false) {
+                        throw new \RuntimeException('Failed to encode route response to JSON');
+                    }
+                    $response = $response
+                        ->withHeader('Content-Type', 'application/json')
+                        ->withBody($this->createStream($jsonData));
+                } elseif ($routeResponse instanceof ResponseInterface) {
+                    // If the route returns a ResponseInterface, we use it directly
+                    $response = $routeResponse;
+                }
+                // If the route returns nothing, we continue with the default response
+
+                $this->emitResponse($response);
+                return;
             }
-        } else {
-            http_response_code(404);
-            echo "404 Not Found";
         }
+
+        $response = $this->responseFactory->createResponse(404)
+            ->withBody($this->createStream('404 Not Found'));
+        $this->emitResponse($response);
+    }
+
+    /**
+     * Create a stream from a string
+     */
+    private function createStream(string $content): \Psr\Http\Message\StreamInterface
+    {
+        $stream = $this->serverRequestFactory->createStream();
+        $stream->write($content);
+        $stream->rewind();
+        return $stream;
+    }
+
+    /**
+     * Emit a response to the client
+     */
+    private function emitResponse(ResponseInterface $response): void
+    {
+        // Send status code
+        http_response_code($response->getStatusCode());
+
+        // Send headers
+        foreach ($response->getHeaders() as $name => $values) {
+            foreach ($values as $value) {
+                header(sprintf('%s: %s', $name, $value));
+            }
+        }
+
+        // Send body
+        echo $response->getBody()->getContents();
     }
 
     /**
