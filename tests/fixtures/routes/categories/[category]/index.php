@@ -1,7 +1,8 @@
 <?php
 
-use Maplee\RouteHandler;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-return RouteHandler::handle(function ($request) {
-    return "Category: " . $request->getParam('category');
-});
+return function (ServerRequestInterface $request, ResponseInterface $response) {
+    return "Category: " . $request->getAttribute('category');
+};

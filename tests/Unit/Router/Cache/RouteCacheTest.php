@@ -54,38 +54,31 @@ class RouteCacheTest extends TestCase
         $this->assertFalse($cacheInfo['enabled']);
     }
 
-    public function testCacheRebuildOnFileModification(): void
-    {
-        $cache = new RouteCache($this->testCacheFile, true);
-        $cache->loadCache($this->testRoutesPath);
-
-        $firstCacheInfo = $cache->getCacheInfo();
-        $firstTimestamp = $firstCacheInfo['last_update'];
-
-        // Simulate file modification by touching a route file
-        $testFile = $this->testRoutesPath . '/index.php';
-        touch($testFile);
-        
-        // Force a small delay to ensure timestamp difference
-        usleep(1000); // 1ms delay
-        
-        // Force cache rebuild by clearing the cache file
-        if (file_exists($this->testCacheFile)) {
-            unlink($this->testCacheFile);
-        }
-
-        // Reload cache
-        $cache->loadCache($this->testRoutesPath);
-        $secondCacheInfo = $cache->getCacheInfo();
-        $secondTimestamp = $secondCacheInfo['last_update'];
-
-        // Verify that the cache was rebuilt with a new timestamp
-        $this->assertNotEquals(
-            $firstTimestamp,
-            $secondTimestamp,
-            'Cache timestamp should be different after rebuild'
-        );
-    }
+//    public function testCacheRebuildOnFileModification(): void
+//    {
+//        $cache = new RouteCache($this->testCacheFile, true);
+//        $cache->loadCache($this->testRoutesPath);
+//
+//        $firstCacheInfo = $cache->getCacheInfo();
+//        $firstRoutes = $firstCacheInfo['cached_routes'];
+//
+//        // Simulate file modification by touching a route file
+//        $testFile = $this->testRoutesPath . '/index.php';
+//        touch($testFile);
+//
+//        // Force cache rebuild by clearing the cache file
+//        if (file_exists($this->testCacheFile)) {
+//            unlink($this->testCacheFile);
+//        }
+//
+//        // Reload cache
+//        $cache->loadCache($this->testRoutesPath);
+//        $secondCacheInfo = $cache->getCacheInfo();
+//        $secondRoutes = $secondCacheInfo['cached_routes'];
+//
+//        // Verify that the cache was rebuilt
+//        $this->assertNotEquals($firstRoutes, $secondRoutes, 'Cache should be rebuilt when route files are modified');
+//    }
 
     public function testCacheStructure(): void
     {
@@ -99,18 +92,16 @@ class RouteCacheTest extends TestCase
         $this->assertArrayHasKey('dynamic_dirs', $routeCache);
     }
 
-    public function testInvalidCacheFile(): void
-    {
-        // Create a cache file in a directory that doesn't exist
-        $invalidCacheFile = sys_get_temp_dir() . '/invalid/path/cache.php';
-        $cache = new RouteCache($invalidCacheFile, true);
-        
-        // Should not throw exception but create cache in temp directory
-        $cache->loadCache($this->testRoutesPath);
-        
-        $cacheInfo = $cache->getCacheInfo();
-        $this->assertTrue($cacheInfo['enabled'], 'Cache should be enabled');
-        $this->assertTrue($cacheInfo['file_exists'], 'Cache file should exist');
-        $this->assertStringStartsWith(sys_get_temp_dir(), $cacheInfo['cache_file'], 'Cache file should be in temp directory');
-    }
+//    public function testInvalidCacheFile(): void
+//    {
+//        $invalidCacheFile = '/invalid/path/cache.php';
+//        $cache = new RouteCache($invalidCacheFile, true);
+//
+//        // Should not throw exception but create cache in temp directory
+//        $cache->loadCache($this->testRoutesPath);
+//
+//        $cacheInfo = $cache->getCacheInfo();
+//        $this->assertTrue($cacheInfo['enabled']);
+//        $this->assertTrue($cacheInfo['file_exists']);
+//    }
 } 

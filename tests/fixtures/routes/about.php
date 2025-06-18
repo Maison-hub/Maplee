@@ -1,7 +1,8 @@
 <?php
 
-use Maplee\RouteHandler;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-return RouteHandler::handle(function ($request) {
+return function (ServerRequestInterface $request, ResponseInterface $response) {
     return "About Page";
-});
+};
