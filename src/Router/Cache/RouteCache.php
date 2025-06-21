@@ -19,12 +19,6 @@ class RouteCache
 
     public function __construct(string $cacheFile, bool $useCache = true)
     {
-        // If the cache file path is not writable, use temp directory
-        $cacheDir = dirname($cacheFile);
-        if (!is_dir($cacheDir) || !is_writable($cacheDir)) {
-            $cacheFile = sys_get_temp_dir() . '/maplee_route_cache.php';
-        }
-
         $this->cacheFile = $cacheFile;
         $this->useCache = $useCache;
     }
@@ -116,19 +110,14 @@ class RouteCache
         $this->scanRoutesForCache($routesPath, '');
 
         $cache = [
-            'timestamp' => (int)(microtime(true) * 1000),
+            'timestamp' => time(),
             'routes' => $this->routeCache
         ];
 
         // Create cache directory if it doesn't exist
         $cacheDir = dirname($this->cacheFile);
         if (!is_dir($cacheDir)) {
-            @mkdir($cacheDir, 0777, true);
-        }
-
-        // If we still can't write to the directory, use temp directory
-        if (!is_writable($cacheDir)) {
-            $this->cacheFile = sys_get_temp_dir() . '/maplee_route_cache.php';
+            mkdir($cacheDir, 0777, true);
         }
 
         // Save cache to file

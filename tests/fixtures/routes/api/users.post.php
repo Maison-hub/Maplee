@@ -1,7 +1,8 @@
 <?php
 
-use Maplee\RouteHandler;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-return RouteHandler::handle(function ($request) {
-    return "Create User: " . json_encode($request->getBody());
-});
+return function (ServerRequestInterface $request, ResponseInterface $response){
+    return "Create User: " . json_encode($request->getParsedBody());
+}; 
