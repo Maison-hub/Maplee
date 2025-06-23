@@ -239,8 +239,6 @@ class RouteCacheTest extends TestCase
 
         $routeCache = $cache->getRouteCache();
 
-        var_dump($routeCache);
-        
         $this->assertIsArray($routeCache);
         $this->assertEmpty($routeCache['cached_routes']);
         $this->assertEquals(0, $routeCache['routes_count']['dynamic_dirs']);
@@ -259,8 +257,6 @@ class RouteCacheTest extends TestCase
         $cache->loadCache($nonExistentDir);
 
         $routeCache = $cache->getCacheInfo();
-
-        var_dump($routeCache);
 
         $this->assertIsArray($routeCache);
         $this->assertArrayHasKey('cached_routes', $routeCache);

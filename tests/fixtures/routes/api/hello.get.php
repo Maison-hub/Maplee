@@ -1,5 +1,5 @@
 <?php
 
 return function () {
-    return "Hello Middleware!";
+    return "[world] Middleware!";
 }; 
