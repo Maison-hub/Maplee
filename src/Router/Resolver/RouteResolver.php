@@ -102,7 +102,6 @@ class RouteResolver
                     }
                 }
             }
-
             // Check for dynamic directories
             if (isset($routeCache['dynamic_dirs'][$current])) {
                 foreach ($routeCache['dynamic_dirs'][$current] as $dir) {

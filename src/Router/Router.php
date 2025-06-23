@@ -20,9 +20,10 @@ class Router
     protected string $routesPath;
     protected RouteCache $routeCache;
     protected RouteResolver $routeResolver;
-    protected ServerRequestFactoryInterface $serverRequestFactory;
+    protected ServerRequestFactory $serverRequestFactory;
     protected ResponseFactoryInterface $responseFactory;
     protected UriFactoryInterface $uriFactory;
+    protected MiddlewareManager $middlewareManager;
 
     /**
      * Router constructor.
@@ -40,10 +41,19 @@ class Router
         $this->serverRequestFactory = new ServerRequestFactory();
         $this->responseFactory = new ResponseFactory();
         $this->uriFactory = new UriFactory();
+        $this->middlewareManager = new MiddlewareManager();
 
         if ($config['useCache']) {
             $this->routeCache->loadCache($this->routesPath);
         }
+    }
+
+    /**
+     * Ajoute un middleware global
+     */
+    public function addMiddleware(\Psr\Http\Server\MiddlewareInterface $middleware): void
+    {
+        $this->middlewareManager->addGlobalMiddleware($middleware);
     }
 
     /**
@@ -110,11 +120,12 @@ class Router
             $result = include $resolvedFile;
 
             if (is_callable($result)) {
-                // $routeResponse = $result($request, $response);
+                // Resolve middlewares for the route
+                $middlewares = $this->middlewareManager->getMiddlewaresForPath($resolvedFile);
 
-                $finalHandler = function(ServerRequestInterface $request) use ($result, $response) {
+                $finalHandler = function (ServerRequestInterface $request) use ($result, $response) {
                     $routeResponse = $result($request, $response);
-                
+
                     if (is_string($routeResponse)) {
                         return $response->withBody($this->createStream($routeResponse));
                     } elseif (is_array($routeResponse)) {
@@ -130,10 +141,6 @@ class Router
                     }
                     return $response;
                 };
-
-                $middlewares = [
-                    // Ajoute ici tes middlewares globaux
-                ];
 
                 $dispatcher = new MiddlewareDispatcher($middlewares, $finalHandler);
                 $routeResponse = $dispatcher->handle($request);

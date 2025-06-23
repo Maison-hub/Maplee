@@ -4,6 +4,7 @@ namespace Maplee\Http\Factory;
 
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 
 class ServerRequestFactory implements ServerRequestFactoryInterface
 {
@@ -27,6 +28,14 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
         return $serverRequest;
     }
 
+    /**
+     * Create a new server request with the given method and URI.
+     *
+     * @param string $method The HTTP method (e.g., 'GET', 'POST').
+     * @param UriInterface|string $uri The URI as a string or a UriInterface.
+     * @param array<string, mixed> $serverParams Additional server parameters.
+     * @return ServerRequestInterface
+     */
     public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface
     {
         $psr17Factory = new \Nyholm\Psr7\Factory\Psr17Factory();

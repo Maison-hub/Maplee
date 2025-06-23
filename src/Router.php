@@ -5,7 +5,10 @@ namespace Maplee;
 use Maplee\Router\Router as RouterImplementation;
 
 /**
- * @method static RouterImplementation create(?string $configPath = null, array $overrides = [])
+ * Router class for handling HTTP requests and routing.
+ *
+ * This class extends the base Router implementation and provides a static
+ * method to create a new instance with optional configuration overrides.
  */
 class Router extends RouterImplementation
 {

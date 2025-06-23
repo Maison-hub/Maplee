@@ -15,6 +15,10 @@ class MiddlewareDispatcher implements RequestHandlerInterface
     /** @var callable */
     private $finalHandler;
 
+    /**
+     * @param MiddlewareInterface[] $middlewares
+     * @param callable $finalHandler
+     */
     public function __construct(array $middlewares, callable $finalHandler)
     {
         $this->middlewares = $middlewares;
