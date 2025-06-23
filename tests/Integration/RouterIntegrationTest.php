@@ -192,4 +192,27 @@ class RouterIntegrationTest extends TestCase
         $this->assertArrayHasKey('last_update', $response);
         $this->assertFalse($response['enabled']); // Cache is disabled in our test setup
     }
+
+    public function testApiMiddlewareAddsHeader(): void
+    {
+        $_SERVER['REQUEST_URI'] = '/api/hello';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+
+        ob_start();
+        $this->router->handleRequest();
+        $output = ob_get_clean();
+
+        $this->assertEquals("Hello Middleware!", $output);
+
+        // Récupère les headers envoyés
+        $headers = headers_list();
+        $found = false;
+        foreach ($headers as $header) {
+            if (stripos($header, 'X-Test-Middleware: true') !== false) {
+                $found = true;
+                break;
+            }
+        }
+        $this->assertTrue($found, 'X-Test-Middleware header should be present');
+    }
 } 
