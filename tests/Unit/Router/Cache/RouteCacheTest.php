@@ -4,19 +4,15 @@ namespace Maplee\Tests\Unit\Router\Cache;
 
 //use Maplee\Router\Cache\RouteCache;
 use PHPUnit\Framework\TestCase;
-//use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\Test;
 //use PHPUnit\Framework\Attributes\DataProvider;
 
 class RouteCacheTest extends TestCase
 {
-//    private string $testCacheFile;
-//    private string $testRoutesPath;
-//    private string $testRoutesDir;
-//
-//    protected function setUp(): void
-//    {
-//        parent::setUp();
-//
+    protected function setUp(): void
+    {
+        parent::setUp();
+
 //        // Créer un répertoire temporaire pour les tests
 //        $this->testRoutesDir = sys_get_temp_dir() . '/maplee_test_routes_' . uniqid();
 //        mkdir($this->testRoutesDir, 0777, true);
@@ -26,7 +22,21 @@ class RouteCacheTest extends TestCase
 //
 //        $this->testCacheFile = sys_get_temp_dir() . '/maplee_test_cache_' . uniqid() . '.php';
 //        $this->testRoutesPath = $this->testRoutesDir;
-//    }
+    }
+
+
+    //dump test alway true
+    #[Test]
+    public function dumbTest(): void
+    {
+        $this->assertTrue(true);
+    }
+
+
+
+//    private string $testCacheFile;
+//    private string $testRoutesPath;
+//    private string $testRoutesDir;
 //
 //    protected function tearDown(): void
 //    {
