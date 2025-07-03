@@ -1,14 +1,14 @@
 <?php
-//
-//namespace Maplee\Tests\Unit\Router\Cache;
-//
+
+namespace Maplee\Tests\Unit\Router\Cache;
+
 //use Maplee\Router\Cache\RouteCache;
-//use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
 //use PHPUnit\Framework\Attributes\Test;
 //use PHPUnit\Framework\Attributes\DataProvider;
-//
-//class RouteCacheTest extends TestCase
-//{
+
+class RouteCacheTest extends TestCase
+{
 //    private string $testCacheFile;
 //    private string $testRoutesPath;
 //    private string $testRoutesDir;
@@ -266,4 +266,4 @@
 //        $this->assertEquals(0, $routeCache['routes_count']['dynamic_dirs']);
 //        $this->assertEquals(0, $routeCache['routes_count']['files']);
 //    }
-//}
+}
