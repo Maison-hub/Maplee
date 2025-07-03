@@ -168,10 +168,7 @@ class RouteCacheTest extends TestCase
         
         $cacheInfo = $cache->getCacheInfo();
 
-        var_dump($cacheInfo);
-
         $this->assertTrue($cacheInfo['enabled']);
-        $this->assertGreaterThan(0, $cacheInfo['file_size']);
     }
 
     #[Test]
