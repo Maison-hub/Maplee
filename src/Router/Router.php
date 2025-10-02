@@ -26,6 +26,11 @@ class Router
     protected MiddlewareManager $middlewareManager;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $config;
+
+    /**
      * Router constructor.
      *
      * @param string|null $configPath Path to the configuration file.
@@ -33,17 +38,18 @@ class Router
      */
     public function __construct(?string $configPath = null, array $overrides = [])
     {
-        $config = RouterConfig::load($configPath, $overrides);
+        $this->config = RouterConfig::load($configPath, $overrides);
 
-        $this->routesPath = $config['routesPath'];
-        $this->routeCache = new RouteCache($config['cacheFile'], $config['useCache']);
+
+        $this->routesPath = $this->config['routesPath'];
+        $this->routeCache = new RouteCache($this->config['cacheFile'], $this->config['useCache']);
         $this->routeResolver = new RouteResolver($this->routesPath);
         $this->serverRequestFactory = new ServerRequestFactory();
         $this->responseFactory = new ResponseFactory();
         $this->uriFactory = new UriFactory();
         $this->middlewareManager = new MiddlewareManager();
 
-        if ($config['useCache']) {
+        if ($this->config['useCache']) {
             $this->routeCache->loadCache($this->routesPath);
         }
     }
@@ -103,6 +109,7 @@ class Router
         $resolvedFile = $this->routeResolver->resolve(
             $segments,
             $method,
+            $this->routeCache->isCacheEnabled(),
             $this->routeCache->getRouteCache()
         );
 

@@ -27,11 +27,11 @@ class RouteResolver
      * } $routeCache
      * @return string|null
      */
-    public function resolve(array $segments, string $method, array $routeCache = []): ?string
+    public function resolve(array $segments, string $method, bool $useCache, array $routeCache = []): ?string
     {
         $this->params = [];
 
-        if (!empty($routeCache)) {
+        if (!empty($routeCache) && $useCache) {
             return $this->resolveFromCache($segments, $method, $routeCache);
         }
 

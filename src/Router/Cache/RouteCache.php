@@ -25,7 +25,11 @@ class RouteCache
 
     public function loadCache(string $routesPath): void
     {
-        if (!$this->useCache || !file_exists($this->cacheFile)) {
+        if (!$this->useCache) {
+            return;
+        }
+
+        if (!file_exists($this->cacheFile)) {
             $this->rebuildCache($routesPath);
             return;
         }
