@@ -18,7 +18,8 @@
 ---
 
 # 🚀 Quick Start
-## Routes structure
+## Routing
+### Routes structure
 ```
 routes/
 ├── index.php               → /
@@ -27,14 +28,36 @@ routes/
 │   └── post/
 │       └── [id].get.php    → /blog/post/:id (GET)
 ```
-## Example route handler
+
+
+### Example simple route handler
 
 ```php
-use Maplee\RouteHandler;
+// routes/index.php
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-RouteHandler::handle(function ($context) {
-    return "Post ID is: " . $context->params['id'];
-});
+return function (ServerRequestInterface $request, ResponseInterface $response) {
+    return "Hello World !";
+};
+```
+
+### Example dynamic route
+`routes/blog/post/[id].get.php`
+```php
+<?php
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+return function (ServerRequestInterface $request, ResponseInterface $response) {
+    return "Category: " . $request->getAttribute('category');
+};
+
+use Maplee\MapleeRequest;
+
+return function (MapleeRequest $request) {
+    return "Post ID in POST Method ". $request->getParam('id');
+};
 ```
 
 # Example usage:
@@ -45,7 +68,7 @@ Maplee uses a routes/ directory by default. You can override it with a maplee.co
 ```php
 // maplee.config.php
 return [
-    'routesPath' => __DIR__ . '/custom-routes',
+    'routesPath' => __DIR__ . '/custom-path',
 ];
 ```
 ## 📂 Example project structure
@@ -58,17 +81,6 @@ project/
 │       └── [slug].get.php
 ├── public/
 │   └── index.php   ← entry point (calls $router->handleRequest())
-```
-## 🛣️ Example route definition
-'routes/blog/post/[id].get.php'
-```php
-<?php
-
-use Maplee\MapleeRequest;
-
-return function (MapleeRequest $request) {
-    return "Post ID in POST Method ". $request->getParam('id');
-};
 ```
 
 # 🧭 Roadmap
