@@ -68,11 +68,11 @@ class Router
         }
 
         if ($request->getUri()->getPath() === '/__maplee/cache') {
-            $jsonData = json_encode($this->routeCache->getCacheInfo(), JSON_PRETTY_PRINT);
+            $jsonData = $this->routeCache->getJsonRouteTree();
 
-            if ($jsonData === false) {
-                throw new \RuntimeException('Failed to encode cache data to JSON');
-            }
+//            if ($jsonData === false) {
+//                throw new \RuntimeException('Failed to encode cache data to JSON');
+//            }
 
             $response = $response
                 ->withHeader('Content-Type', 'application/json')
