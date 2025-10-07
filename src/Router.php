@@ -4,9 +4,6 @@ namespace Maplee;
 
 use Maplee\Router\Router as RouterImplementation;
 
-/**
- * @method static RouterImplementation create(?string $configPath = null, array $overrides = [])
- */
 class Router extends RouterImplementation
 {
     /**
